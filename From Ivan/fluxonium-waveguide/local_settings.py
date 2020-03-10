@@ -1,1 +1,0 @@
-samples_path = r'C:\SC Lab\Projects\Fluxonium\data_process'
