@@ -34,21 +34,51 @@ def multi_gaussian(X, Y, param_mat):
 #     return height, x, y, width_x, width_y
 
 
-def fit_gaussian(X, Y, data, param_mat):
+def fit_gaussian(X, Y, data, param_mat, method='same_width', fixed_parameters=[]):
     """Returns the gaussian parameters of a 2D distribution found by a fit"""
     # print(param_mat.shape)
-    n_gaussian = param_mat.shape[0]
-    param = param_mat.ravel()
-    def error_func(param):
-        param_matrix = np.reshape(param, (n_gaussian, 5))
-        data_sim = multi_gaussian(X, Y, param_matrix)
-        return np.ravel((data_sim - data) ** 2)
-    res = optimize.leastsq(error_func, param, full_output=1)
-    p = res[0]
-    p_cov = res[1]
-    p = np.reshape(p, (n_gaussian, 5))
-    p_err = np.sqrt(p_cov.diagonal())
-    p_err = np.reshape(p_err, (n_gaussian, 5))
+    n_gaussian = len(param_mat)
+    if method == 'same_width':
+        p = np.ones_like(param_mat)
+        p_err = np.ones_like(param_mat)
+        param = np.append(param_mat[:, :3].ravel(), param_mat[0, 3])
+        def error_func(param):
+            param_matrix = np.ones((n_gaussian, 5)) * param[-1]
+            param_matrix[:, :3] = np.reshape(param[:-1], (n_gaussian, 3))
+            data_sim = multi_gaussian(X, Y, param_matrix)
+            return np.ravel((data_sim - data) ** 2)
+        res = optimize.leastsq(error_func, param, full_output=1)
+        p *= res[0][-1]
+        p[:, :3] = np.reshape(res[0][:-1], (n_gaussian, 3))
+        p_cov = res[1]
+        err = np.sqrt(p_cov.diagonal())
+        p_err *= err[-1]
+        p_err[:, :3] = np.reshape(err[:-1], (n_gaussian, 3))
+    elif method == 'different_width':    
+        param = param_mat.ravel()
+        def error_func(param):
+            param_matrix = np.reshape(param, (n_gaussian, 5))
+            data_sim = multi_gaussian(X, Y, param_matrix)
+            return np.ravel((data_sim - data) ** 2)
+        res = optimize.leastsq(error_func, param, full_output=1)
+        p = res[0]
+        p_cov = res[1]
+        p = np.reshape(p, (n_gaussian, 5))
+        p_err = np.sqrt(p_cov.diagonal())
+        p_err = np.reshape(p_err, (n_gaussian, 5))
+    elif method == 'fix_positions_and_widths':
+        param = param_mat.ravel()
+        def error_func(param):
+            param_matrix = np.reshape(param, (n_gaussian, 1))
+            param_matrix = np.concatenate((param_matrix, fixed_parameters), axis=1)
+            data_sim = multi_gaussian(X, Y, param_matrix)
+            return np.ravel((data_sim - data) ** 2)
+        res = optimize.leastsq(error_func, param, full_output=1)
+        p = res[0]
+        p_cov = res[1]
+        p_err = np.sqrt(p_cov.diagonal())
+    else:
+        raise ValueError('method = %s? No such fucking method!' % method)
     return p, p_err
 
 if __name__ == '__main__':

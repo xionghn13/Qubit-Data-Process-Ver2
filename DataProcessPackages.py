@@ -1,18 +1,26 @@
+#Generic Python packages
 import numpy as np
 import scipy.interpolate as itp
 import matplotlib.pyplot as plt
-import SubtractBackgroundFunc as sbf
-import QubitSpectrumFunc as qsf
 from scipy.optimize import curve_fit
-import FunctionLib
-import ExtractDataFunc as edf
 import h5py
 import time
 import calendar
+import sys
 import Labber
-import FittingFunc as ff
-from DataManipulationFunc import *
 
+#Home-made packages
+import FunctionLibrary
+import ExtractDataFunction as edf
+import FittingFunction as ff
+from DataManipulationFunction import *
+from SingleShotDataProcessing.SingleShotFunction import *
+
+#interactive packages
+from ipywidgets import interact, interactive, fixed, interact_manual
+import ipywidgets as widgets
+
+#CONSTANTS
 
 e = 1.60217662e-19 # C
 hbar = 1.0545718e-34 # m^2 * kg / s
