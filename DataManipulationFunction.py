@@ -45,3 +45,7 @@ def mapping(function, dataset, order=0):
         return [mapping(function, d, order-1) for d in dataset]
     else:
         return np.array(list(map(function, dataset)))
+        
+def partition(array, number = 1):
+    truncated_array = array[:number * int(len(array)/number)]
+    return truncated_array.reshape(int(len(array)/number), number,*list(array.shape)[1:])

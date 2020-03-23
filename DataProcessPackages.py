@@ -15,6 +15,7 @@ import ExtractDataFunction as edf
 import FittingFunction as ff
 from DataManipulationFunction import *
 from SingleShotDataProcessing.SingleShotFunction import *
+from QuantumMechanics.QuantumMechanics import *
 
 #interactive packages
 from ipywidgets import interact, interactive, fixed, interact_manual
