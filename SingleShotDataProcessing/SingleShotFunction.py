@@ -1,6 +1,6 @@
 import numpy as np
 from sklearn.cluster import MiniBatchKMeans, KMeans
-import SingleShotDataProcess.FitGaussians as fg
+import SingleShotDataProcessing.FitGaussians as fg
 
 
 
@@ -45,15 +45,26 @@ def complex_array_to_2d_histogram(complex_array, bin=100):
     return X, Y, H
 
 
-def full_blob_analysis(complex_array, bin=100, num_blob=4):
+def full_blob_analysis(complex_array, bin=100, num_blob=4, method='same_width'):
     sReal = np.real(complex_array)
     sImag = np.imag(complex_array)
     X, Y, H = complex_array_to_2d_histogram(complex_array, bin=bin)
     centers, sigmas = get_blob_centers(sReal, sImag, num_blob)
     heights = get_center_heights(X, Y, H, centers)
     param_mat = np.concatenate((heights.reshape(num_blob, 1), centers, sigmas), axis=1)
-    params, params_err = fg.fit_gaussian(X, Y, H, param_mat)
+    params, params_err = fg.fit_gaussian(X, Y, H, param_mat, method=method)
     return params, params_err
+
+
+def fit_blob_height(complex_array, centers, sigmas, bin=100, num_blob=4):
+    sReal = np.real(complex_array)
+    sImag = np.imag(complex_array)
+    X, Y, H = complex_array_to_2d_histogram(complex_array, bin=bin)
+    heights = get_center_heights(X, Y, H, centers)
+    fixed_param = np.concatenate((centers, sigmas), axis=1)
+    params, params_err = fg.fit_gaussian(X, Y, H, heights, method='fix_positions_and_widths', fixed_parameters=fixed_param)
+    return params, params_err
+
 
 
 def unwrap_blob_parameters(params):

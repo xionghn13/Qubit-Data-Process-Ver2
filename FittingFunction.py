@@ -1,4 +1,4 @@
-from FunctionLib import *
+from FunctionLibrary import *
 from scipy.optimize import curve_fit
 
 
@@ -22,7 +22,6 @@ def fit_transient_time(DrivePowerArray, Gamma_r, OptMatrix, power_for_plot=[]):
     Gamma_in_fit, Gamma_out_fit, pow_ratio_fit = opt
     FitTime = transient_time_curve(x_for_plot, Gamma_in_fit, Gamma_out_fit, pow_ratio_fit)
     return opt, cov, FitTime
-
 
 
 def fit_lorenztian(frequency, V_sq_abs):
