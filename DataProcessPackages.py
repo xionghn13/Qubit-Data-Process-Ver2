@@ -2,6 +2,7 @@
 import numpy as np
 import scipy.interpolate as itp
 import matplotlib.pyplot as plt
+from matplotlib.ticker import MaxNLocator
 from scipy.optimize import curve_fit
 import h5py
 import time
