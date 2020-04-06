@@ -3,7 +3,6 @@ from sklearn.cluster import MiniBatchKMeans, KMeans
 import SingleShotDataProcessing.FitGaussians as fg
 
 
-
 def get_blob_centers(x, y, num_blob):
     num_points = len(x)
     matrix = np.array([x, y]).transpose()
@@ -62,9 +61,9 @@ def fit_blob_height(complex_array, centers, sigmas, bin=100, num_blob=4):
     X, Y, H = complex_array_to_2d_histogram(complex_array, bin=bin)
     heights = get_center_heights(X, Y, H, centers)
     fixed_param = np.concatenate((centers, sigmas), axis=1)
-    params, params_err = fg.fit_gaussian(X, Y, H, heights, method='fix_positions_and_widths', fixed_parameters=fixed_param)
+    params, params_err = fg.fit_gaussian(X, Y, H, heights, method='fix_positions_and_widths',
+                                         fixed_parameters=fixed_param)
     return params, params_err
-
 
 
 def unwrap_blob_parameters(params):
@@ -85,3 +84,63 @@ def data_point_index_for_blob(heralding_signal, blob_center, blob_sigma, width_t
     data_index = ((sReal - blob_center[0]) / blob_sigma[0] / width_threshold) ** 2 + (
             (sImag - blob_center[1]) / blob_sigma[1] / width_threshold) ** 2 < 1
     return data_index
+
+
+def blob_population_to_qubit_population(population_matrix, label_list):
+    pgA = population_matrix[label_list.index('gg')] + population_matrix[label_list.index('ge')]
+    peA = population_matrix[label_list.index('eg')] + population_matrix[label_list.index('ee')]
+
+    pgB = population_matrix[label_list.index('gg')] + population_matrix[label_list.index('eg')]
+    peB = population_matrix[label_list.index('ge')] + population_matrix[label_list.index('ee')]
+    return pgA, peA, pgB, peB
+
+
+def blob_population_std_to_qubit_population_std(population_matrix_std, label_list):
+    pgA_std = np.sqrt(
+        population_matrix_std[label_list.index('gg')] ** 2 + population_matrix_std[label_list.index('ge')] ** 2)
+    peA_std = np.sqrt(
+        population_matrix_std[label_list.index('eg')] ** 2 + population_matrix_std[label_list.index('ee')] ** 2)
+
+    pgB_std = np.sqrt(
+        population_matrix_std[label_list.index('gg')] ** 2 + population_matrix_std[label_list.index('eg')] ** 2)
+    peB_std = np.sqrt(
+        population_matrix_std[label_list.index('ge')] ** 2 + population_matrix_std[label_list.index('ee')] ** 2)
+    return pgA_std, peA_std, pgB_std, peB_std
+
+
+def p_to_fidelity(p_arr, p_err_arr, dim):
+    parameter = np.average(p_arr)
+    num_p = len(p_arr)
+    parameter_err = np.sqrt(np.sum(p_err_arr ** 2)) / num_p
+    error = abs((dim - 1) * (1 - parameter) / dim)
+    error_err = (dim - 1) * parameter_err / dim
+    error = error
+    error_err = error_err
+    return [parameter, parameter_err, error, error_err]
+
+
+def individual_p_to_fidelity(p_arr, p_err_arr, dim, label_list):
+    for i in range(len(p_arr)):
+        parameter = p_arr[i]
+        parameter_err = p_err_arr[i]
+        error = abs((dim - 1) * (1 - parameter) / dim)
+        error_err = (dim - 1) * parameter_err / dim
+        print('for blob %s, p=%.4G\u00B1%.4G, fidelity %.4G\u00B1%.4G' % (
+            label_list[i], parameter, parameter_err, 1 - error, error_err))
+
+
+def p_to_fidelity_interleaved(p_arr, p_err_arr, dim, p, p_err, blob_ind):
+    if type(blob_ind) is list:
+        parameter_0 = np.average(p_arr[blob_ind])
+        num_p = len(p_arr)
+        parameter_0_err = np.sqrt(np.sum(p_err_arr[blob_ind] ** 2)) / num_p
+    else:
+        parameter_0 = p_arr[blob_ind]
+        parameter_0_err = p_err_arr[blob_ind]
+
+    parameter = parameter_0 / p
+    parameter_err = parameter * np.sqrt((parameter_0_err / parameter_0) ** 2 + (p_err / p) ** 2)
+    error = abs((dim - 1) * (1 - parameter) / dim)
+    error_err = (dim - 1) * parameter_err / dim
+
+    return [parameter, parameter_err, error, error_err]

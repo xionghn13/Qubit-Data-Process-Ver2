@@ -1,5 +1,5 @@
 import numpy as np
-
+import sys
 
 # def AutoRotate(complex):
     # complex_out = complex
@@ -49,3 +49,8 @@ def mapping(function, dataset, order=0):
 def partition(array, number = 1):
     truncated_array = array[:number * int(len(array)/number)]
     return truncated_array.reshape(int(len(array)/number), number,*list(array.shape)[1:])
+
+def flush_print(string):
+    sys.stdout.write("\r")
+    sys.stdout.write(string)
+    sys.stdout.flush()
