@@ -49,6 +49,17 @@ def gaussian1D(x, a, b, sigma, x0):
 def gaussian2D(x, y, a, b, sigmax, sigmay, x0, y0):
     return a + b * np.exp(- ((x - x0) ** 2 / (2 * sigmax ** 2) + (y - y0) ** 2) / (2 * sigmay ** 2))
 
+
+def dephasing_with_cavity_photons(omega_d, chi, epsilon, Gamma_2, kappa, omega_c):
+    return Gamma_2 + 8 * kappa * chi ** 2 * epsilon ** 2 / (
+            (kappa ** 2 + 4 * (omega_d - omega_c) ** 2 - chi ** 2) ** 2 + 4 * chi ** 2 * kappa ** 2
+    )
+
+def frequency_shift_with_cavity_photons(omega_d, chi, epsilon, kappa, omega_0, omega_c):
+    return omega_0 + 4 * chi * epsilon ** 2 * (kappa ** 2 + 4 * (omega_d - omega_c) ** 2 - chi ** 2) / (
+        (kappa ** 2 + 4 * (omega_d - omega_c) ** 2 - chi ** 2) ** 2 + 4 * chi ** 2 * kappa ** 2
+    )
+
 # Old Stuff
 
 # def T1_curve(t, A, T1, B):
