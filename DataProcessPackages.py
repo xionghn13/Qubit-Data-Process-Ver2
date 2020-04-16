@@ -9,6 +9,7 @@ import time
 import calendar
 import sys
 import Labber
+import matplotlib.patches as mpatches
 
 #Home-made packages
 import FunctionLibrary
