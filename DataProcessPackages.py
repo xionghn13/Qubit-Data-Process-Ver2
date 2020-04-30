@@ -10,11 +10,14 @@ import calendar
 import sys
 import Labber
 import matplotlib.patches as mpatches
+from importlib import reload
+
 
 #Home-made packages
 import FunctionLibrary
 import ExtractDataFunction as edf
 import FittingFunction as ff
+import SubtractBackgroundFunction as sbf
 from DataManipulationFunction import *
 from SingleShotDataProcessing.SingleShotFunction import *
 from QuantumMechanics.QuantumMechanics import *

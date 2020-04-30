@@ -61,31 +61,6 @@ def fit_lorentzian(frequency, V_sq_abs):
     return opt, err, fit_x_data, fit_abs
 
 
-def fit_rabi(x_data, y_data):
-    B_guess = y_data.mean()
-    A_guess = y_data[0] - B_guess
-    T1_guess = x_data[-1]
-
-    Tpi_guess = T1_guess / 4
-    phi0_guess = 0
-    guess = ([A_guess, T1_guess, B_guess, Tpi_guess, phi0_guess])
-    bounds = (
-        (-np.inf, 0, -np.inf, 0, - np.pi / 2),
-        (np.inf, np.inf, np.inf, np.inf, np.pi / 2)
-    )
-
-    try:
-        opt, cov = curve_fit(rabi_curve, x_data, y_data, p0=guess, bounds=bounds)
-    except RuntimeError:
-        print("Error - curve_fit failed")
-        opt = guess
-        cov = np.zeros([len(opt), len(opt)])
-    A_fit, T1_fit, B_fit, Tpi_fit, phi0_fit = opt
-    err = np.sqrt(cov.diagonal())
-    fit_time = np.linspace(x_data.min(), x_data.max(), 200)
-    fit_curve = rabi_curve(fit_time, A_fit, T1_fit, B_fit, Tpi_fit, phi0_fit)
-
-    return opt, err, fit_time, fit_curve
 
 
 def fit_ramsey(x_data, y_data):
@@ -96,14 +71,14 @@ def fit_ramsey(x_data, y_data):
     T_guess = x_data[-1] / 5
     t0_guess = 0
 
-    fourier = np.fft.fft(y_data)
+    fourier = np.fft.fft(y_data - y_data.mean())
     time_step = x_data[1] - x_data[0]
     freq = np.fft.fftfreq(len(x_data), d=time_step)
     ind_max = np.argmax(np.abs(fourier))
     f_guess = freq[ind_max]
 
     guess = [a_guess, b_guess, f_guess, t0_guess, T_guess]
-
+    # print(guess)
     function = damped_sinusoid
 
     try:
@@ -125,6 +100,11 @@ def fit_ramsey(x_data, y_data):
 
     return opt, err, fit_time, fit_curve
 
+
+def fit_rabi(x_data, y_data):
+    opt, err, fit_time, fit_curve = fit_ramsey(x_data, y_data)
+    return opt, err, fit_time, fit_curve
+	
 
 def fit_dephasing_and_frequency_shift_with_cavity_photons(x_data, dephasing_data, frequency_shift_data,
                                                           method='fix_Gamma_2_kappa_omega_c_omega_0', Gamma_2=0,
@@ -215,3 +195,33 @@ def fit_dephasing_and_frequency_shift_with_cavity_photons(x_data, dephasing_data
     omega_fit = fit_curve[n_pts:]
     return opt, err, fit_x, Gamma_fit, omega_fit
 
+
+def fitReflectionCircles(OneFreqUniqTrunc, OnePowerUniqTrunc, RComplexTrunc, guess, bounds):
+    RForFit = RComplexTrunc.ravel()
+    RForFit = np.concatenate((np.real(RForFit), np.imag(RForFit)))
+
+    Power = 1e-3 * 10 ** (OnePowerUniqTrunc / 10)
+    NumPowerTrunc = len(Power)
+    opt, cov = curve_fit(reflection_for_fit, [OneFreqUniqTrunc, Power], RForFit, p0=guess, bounds=bounds, max_nfev=300000, ftol=1e-15)
+    f0_fit, gamma_f_fit, P0_fit, A_fit, amp_cor_re_fit, amp_cor_im_fit, P0_im_fit= opt
+    LargerFreqRange = np.linspace(f0_fit - gamma_f_fit * 10, f0_fit + gamma_f_fit * 10, 500)
+    LargerFreqRange = np.concatenate(([0], LargerFreqRange, [0]))
+    FittedComplex = reflection_for_fit([LargerFreqRange, Power], f0_fit, gamma_f_fit, P0_fit, A_fit, amp_cor_re_fit, amp_cor_im_fit, P0_im_fit)
+    split_ind = int(len(FittedComplex) / 2)
+    FittedComplex = FittedComplex[:split_ind] + 1j * FittedComplex[split_ind:]
+    FittedComplex = FittedComplex.reshape((len(LargerFreqRange), NumPowerTrunc))
+    return opt, cov, LargerFreqRange, FittedComplex
+
+
+def reflection_for_fit(fPower, f0, gamma_f, P0, A, amp_cor_re, amp_cor_im, P0_im):
+    f = fPower[0]
+    num_f = len(f)
+    Power = fPower[1]
+    num_Power = len(Power)
+    f = np.tensordot(f, np.ones(num_Power), axes=0)
+    Power = np.tensordot(np.ones(num_f), Power, axes=0)
+    r = (amp_cor_re + amp_cor_im * 1j) * (1 - 2 * (P0 + P0_im * 1j) * (1 + 2j * (f - f0) / gamma_f) / (1 + 4 * (f - f0) ** 2 / gamma_f ** 2 + A * Power))
+    r = r.ravel()
+    r = np.concatenate((np.real(r), np.imag(r)))  # for curve_fit
+    # print('reflection_for_fit called')
+    return r
