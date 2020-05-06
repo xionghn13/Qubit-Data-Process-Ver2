@@ -183,6 +183,23 @@ def fit_dephasing_and_frequency_shift_with_cavity_photons(x_data, dephasing_data
             Gamma_fit = dephasing_with_cavity_photons(omega_d, chi, epsilon, Gamma_2, kappa, omega_c)
             omega_fit = frequency_shift_with_cavity_photons(omega_d, chi, epsilon, kappa, omega_0, omega_c)
             return np.concatenate((Gamma_fit, omega_fit))
+    elif method == 'fix_kappa':
+        Gamma_2_guess = dephasing_data[0]
+        omega_0_guess = frequency_shift_data[0]
+        chi_guess = kappa / 10
+        max_Gamma_d = np.max(dephasing_data) - np.min(dephasing_data)
+        epsilon_guess = np.sqrt(
+            max_Gamma_d / 8 / kappa / chi_guess ** 2 * (
+                    (kappa ** 2 - chi_guess ** 2) ** 2 + 4 * chi_guess ** 2 * kappa ** 2
+            )
+        )
+        omega_c_guess = np.mean(x_data)
+        guess = [chi_guess, epsilon_guess, Gamma_2_guess, omega_0_guess, omega_c_guess]
+
+        def function(omega_d, chi, epsilon, Gamma_2, omega_0, omega_c):
+            Gamma_fit = dephasing_with_cavity_photons(omega_d, chi, epsilon, Gamma_2, kappa, omega_c)
+            omega_fit = frequency_shift_with_cavity_photons(omega_d, chi, epsilon, kappa, omega_0, omega_c)
+            return np.concatenate((Gamma_fit, omega_fit))
     elif method == 'fix_no_parameters':
         Gamma_2_guess = dephasing_data[0]
         omega_0_guess = frequency_shift_data[0]
