@@ -113,10 +113,18 @@ def fit_ramsey(x_data, y_data):
             T_guess = x_data[-1]
             guess = [a_guess, b_guess, f_guess, t0_guess, T_guess]
             opt, cov = curve_fit(function, x_data, y_data, p0=guess)
-        except RuntimeError:
-            print("Error - curve_fit failed")
-            opt = guess
-            cov = np.zeros([len(opt), len(opt)])
+        except RuntimeError:   
+            try:
+                opt_exp, err_exp, fit_time, fit_curve = fit_exponential(x_data, y_data)
+                opt = np.zeros(5,) + np.nan
+                err = np.zeros(5,) + np.nan
+                opt[[0, 1, -1]] = opt_exp
+                err[[0, 1, -1]] = err_exp
+                return opt, err, fit_time, fit_curve
+            except RuntimeError:
+                print("Error - curve_fit failed")
+                opt = guess
+                cov = np.zeros([len(opt), len(opt)])
 
     err = np.sqrt(cov.diagonal())
     fit_time = np.linspace(x_data.min(), x_data.max(), 200)
