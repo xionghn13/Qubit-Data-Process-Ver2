@@ -91,14 +91,14 @@ def fit_ramsey(x_data, y_data):
     a_guess = (y_data.mean() + y_data[-1]) / 2
     # y_data.mean() gives a very small number for centered data. That will cause an unexpected bug in curve_fit such
     # that the covariance matrix can't be calculated.
-    b_guess = y_data[0] - a_guess
+    b_guess = (y_data.max() - y_data.min()) / 2
     T_guess = x_data[-1] / 5
     t0_guess = 0
-
+    num_y = len(y_data)
     fourier = np.fft.fft(y_data - y_data.mean())
     time_step = x_data[1] - x_data[0]
     freq = np.fft.fftfreq(len(x_data), d=time_step)
-    ind_max = np.argmax(np.abs(fourier))
+    ind_max = np.argmax(np.abs(fourier[:int(num_y / 2)]))
     f_guess = freq[ind_max]
 
     guess = [a_guess, b_guess, f_guess, t0_guess, T_guess]

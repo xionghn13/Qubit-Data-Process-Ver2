@@ -55,7 +55,7 @@ def full_blob_analysis(complex_array, bin=100, num_blob=4, method='same_width'):
     return params, params_err
 
 
-def fit_blob_height(complex_array, centers, sigmas, bin=100, num_blob=4):
+def fit_blob_height(complex_array, centers, sigmas, bin=100):
     sReal = np.real(complex_array)
     sImag = np.imag(complex_array)
     X, Y, H = complex_array_to_2d_histogram(complex_array, bin=bin)
@@ -64,6 +64,15 @@ def fit_blob_height(complex_array, centers, sigmas, bin=100, num_blob=4):
     params, params_err = fg.fit_gaussian(X, Y, H, heights, method='fix_positions_and_widths',
                                          fixed_parameters=fixed_param)
     return params, params_err
+
+
+def count_points_in_blob(complex_array, centers, sigmas, width_threshold=2):
+    num_blob = centers.shape[0]
+    counts = np.zeros((num_blob,))
+    for i in range(num_blob):
+        data_index = data_point_index_for_blob(complex_array, centers[i, :], sigmas[i, :], width_threshold=width_threshold)
+        counts[i] = np.sum(data_index)
+    return counts
 
 
 def unwrap_blob_parameters(params):
