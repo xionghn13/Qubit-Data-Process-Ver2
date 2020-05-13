@@ -92,13 +92,13 @@ def fit_ramsey(x_data, y_data):
     # y_data.mean() gives a very small number for centered data. That will cause an unexpected bug in curve_fit such
     # that the covariance matrix can't be calculated.
     b_guess = (y_data.max() - y_data.min()) / 2
-    T_guess = x_data[-1] / 5
+    T_guess = x_data[-1]
     t0_guess = 0
     num_y = len(y_data)
     fourier = np.fft.fft(y_data - y_data.mean())
     time_step = x_data[1] - x_data[0]
     freq = np.fft.fftfreq(len(x_data), d=time_step)
-    ind_max = np.argmax(np.abs(fourier[:int(num_y / 2)]))
+    ind_max = np.argmax(np.abs(fourier))
     f_guess = freq[ind_max]
 
     guess = [a_guess, b_guess, f_guess, t0_guess, T_guess]
@@ -110,7 +110,7 @@ def fit_ramsey(x_data, y_data):
 
     except RuntimeError:
         try:
-            T_guess = x_data[-1]
+            T_guess = x_data[-1] / 5
             guess = [a_guess, b_guess, f_guess, t0_guess, T_guess]
             opt, cov = curve_fit(function, x_data, y_data, p0=guess)
         except RuntimeError:   
@@ -137,6 +137,37 @@ def fit_rabi(x_data, y_data):
     opt, err, fit_time, fit_curve = fit_ramsey(x_data, y_data)
     return opt, err, fit_time, fit_curve
 
+
+def fit_RB(x_data, y_data, model=0):
+
+    a_guess = y_data[-1]
+    b_guess = y_data[0] - a_guess
+    p_guess = 0.95
+
+    if model == 0:
+        guess = [p_guess, a_guess, b_guess]
+        # print(guess)
+        function = randomized_benchmarking_0
+    elif model == 1:
+        guess = [p_guess, a_guess, b_guess, 0.035 * b_guess]
+        # print(guess)
+        function = randomized_benchmarking_1
+    else:
+        raise ValueError('model = %s? No such fucking model!' % model)
+    try:
+        opt, cov = curve_fit(function, x_data, y_data, p0=guess)
+
+    except RuntimeError:
+        print("Error - curve_fit failed")
+        opt = guess
+        cov = np.zeros([len(opt), len(opt)])
+
+    err = np.sqrt(cov.diagonal())
+    fit_time = np.linspace(x_data.min(), x_data.max(), 200)
+    fit_curve = function(fit_time, *opt)
+
+    return opt, err, fit_time, fit_curve
+    
 
 def fit_dephasing_and_frequency_shift_with_cavity_photons(x_data, dephasing_data, frequency_shift_data,
                                                           method='fix_Gamma_2_kappa_omega_c_omega_0', Gamma_2=0,
