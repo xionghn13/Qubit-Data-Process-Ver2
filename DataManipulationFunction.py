@@ -62,3 +62,8 @@ def flush_print(string):
     sys.stdout.write("\r")
     sys.stdout.write(string)
     sys.stdout.flush()
+
+
+def exclude_NaNs(x_data, y_data):
+    ind = (x_data == x_data) * (y_data == y_data)
+    return x_data[ind], y_data[ind]
