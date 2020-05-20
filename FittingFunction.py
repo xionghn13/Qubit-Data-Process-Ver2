@@ -1,6 +1,6 @@
 from FunctionLibrary import *
 from scipy.optimize import curve_fit
-
+from scipy.signal import find_peaks
 
 def fit_transient_time(DrivePowerArray, Gamma_r, OptMatrix, power_for_plot=[]):
     if len(power_for_plot) == 0:
@@ -59,6 +59,56 @@ def fit_lorentzian(frequency, V_sq_abs):
     fit_abs = lorentzian(fit_x_data, *opt)
 
     return opt, err, fit_x_data, fit_abs
+
+
+def fit_gaussians_1D(x_data, y_data, num_gaussian=2, prominence_guess_factor=0.01,
+ width_guess_factor=0.01):
+    # only for positive gaussians
+    num_pts = len(x_data)
+    y_max = y_data.max()
+    y_min = y_data.min()
+    x_step = x_data[1] - x_data[0]
+    y_range = y_max - y_min
+    peaks, properties = find_peaks(y_data, prominence=y_range * prominence_guess_factor
+    , width=num_pts * width_guess_factor)
+    peak_heights = y_data[peaks] - y_min
+    peak_widths = properties["widths"]
+    peak_positions = x_data[peaks]
+    if num_gaussian > len(peaks):
+        raise ValueError('Only found %d peaks. Please change search criteria.' 
+        % len(peaks))
+    sort_height_index = np.argsort(peak_heights)
+    sorted_heights = peak_heights[sort_height_index]
+    sorted_widths = peak_widths[sort_height_index]
+    sorted_positions = peak_positions[sort_height_index]
+    height_guess = sorted_heights[-num_gaussian:]
+    width_guess = sorted_widths[-num_gaussian:] * x_step
+    position_guess = sorted_positions[-num_gaussian:]
+    guess = np.concatenate([[y_min], height_guess, width_guess, position_guess])
+    # print(guess)
+    def multi_gaussian1D(x, *args):
+        Z = args[0]
+        parameter_matrix = np.reshape(args[1:], [3, num_gaussian])
+        for i in range(num_gaussian):            
+            Z += gaussian1D(x, 0, parameter_matrix[0, i],
+            parameter_matrix[1, i], parameter_matrix[2, i])
+        return Z
+   
+
+    try:
+        opt, cov = curve_fit(multi_gaussian1D, x_data, y_data, guess)
+    except RuntimeError:
+        print("Error - curve_fit failed")
+        opt = guess
+        cov = np.zeros([len(opt), len(opt)])
+
+    err = np.sqrt(np.diag(cov))
+    # print(qopt)
+
+    fit_x_data = np.linspace(x_data.min(), x_data.max(), 200)
+    fit_y_data = multi_gaussian1D(fit_x_data, *opt)
+
+    return opt, err, fit_x_data, fit_y_data
 
 
 def fit_exponential(x_data, y_data):
