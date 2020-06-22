@@ -149,20 +149,28 @@ def fit_ramsey(x_data, y_data):
     time_step = x_data[1] - x_data[0]
     freq = np.fft.fftfreq(len(x_data), d=time_step)
     ind_max = np.argmax(np.abs(fourier))
-    f_guess = freq[ind_max]
+    f_guess = np.abs(freq[ind_max])
 
     guess = [a_guess, b_guess, f_guess, t0_guess, T_guess]
+    bound = [
+    [-abs(abs(y_data).max() * 10), -abs(b_guess * 10), f_guess * 0.1, -x_data[-1], T_guess * 0.1],
+    [abs(abs(y_data).max() * 10), abs(b_guess * 10), f_guess * 10, x_data[-1], T_guess * 10]
+    ]
     # print(guess)
     function = damped_sinusoid
 
     try:
-        opt, cov = curve_fit(function, x_data, y_data, p0=guess)
+        opt, cov = curve_fit(function, x_data, y_data, p0=guess, bounds=bound)
 
     except RuntimeError:
         try:
             T_guess = x_data[-1] / 5
             guess = [a_guess, b_guess, f_guess, t0_guess, T_guess]
-            opt, cov = curve_fit(function, x_data, y_data, p0=guess)
+            bound = [
+            [-abs(abs(y_data).max() * 10), -abs(b_guess * 10), f_guess * 0.1, -x_data[-1], T_guess * 0.1],
+            [abs(abs(y_data).max() * 10), abs(b_guess * 10), f_guess * 10, x_data[-1], T_guess * 10]
+            ]
+            opt, cov = curve_fit(function, x_data, y_data, p0=guess, bounds=bound)
         except RuntimeError:   
             try:
                 opt_exp, err_exp, fit_time, fit_curve = fit_exponential(x_data, y_data)
@@ -182,7 +190,45 @@ def fit_ramsey(x_data, y_data):
 
     return opt, err, fit_time, fit_curve
 
+def fit_drifted_ramsey(x_data, y_data):
+    a_guess = (y_data.mean() + y_data[-1]) / 2
+    b_guess = (y_data.max() - y_data.min()) / 2
+    c_guess = a_guess
+    T1_guess = x_data[-1]
+    T2_guess = T1_guess
+    t0_guess = 0
+    num_y = len(y_data)
+    fourier = np.fft.fft(y_data - y_data.mean())
+    time_step = x_data[1] - x_data[0]
+    freq = np.fft.fftfreq(len(x_data), d=time_step)
+    ind_max = np.argmax(np.abs(fourier))
+    f_guess = np.abs(freq[ind_max])
 
+    guess = [a_guess, b_guess, c_guess, f_guess, t0_guess, T1_guess, T2_guess]
+    bound = [
+    [-abs(abs(y_data).max() * 10), -abs(b_guess), -abs(abs(y_data).max() * 10),
+    f_guess * 0.1, -x_data[-1], T1_guess * 0.1, T2_guess * 0.1],
+    [abs(abs(y_data).max() * 10), abs(b_guess), abs(abs(y_data).max() * 10),
+    f_guess * 10, x_data[-1], T1_guess * 10, T2_guess * 10]
+    ]
+    # print(guess)
+    function = drifted_damped_sinusoid
+
+    try:
+        opt, cov = curve_fit(function, x_data, y_data, p0=guess, bounds=bound)
+
+    except RuntimeError:
+        print("Error - curve_fit failed")
+        opt = guess
+        cov = np.zeros([len(opt), len(opt)])
+
+    err = np.sqrt(cov.diagonal())
+    fit_time = np.linspace(x_data.min(), x_data.max(), 200)
+    fit_curve = function(fit_time, *opt)
+
+    return opt, err, fit_time, fit_curve
+    
+    
 def fit_rabi(x_data, y_data):
     opt, err, fit_time, fit_curve = fit_ramsey(x_data, y_data)
     return opt, err, fit_time, fit_curve
@@ -192,6 +238,37 @@ def fit_RB(x_data, y_data, model=0):
 
     a_guess = y_data[-1]
     b_guess = y_data[0] - a_guess
+    p_guess = 0.95
+
+    if model == 0:
+        guess = [p_guess, a_guess, b_guess]
+        # print(guess)
+        function = randomized_benchmarking_0
+    elif model == 1:
+        guess = [p_guess, a_guess, b_guess, 0.035 * b_guess]
+        # print(guess)
+        function = randomized_benchmarking_1
+    else:
+        raise ValueError('model = %s? No such fucking model!' % model)
+    try:
+        opt, cov = curve_fit(function, x_data, y_data, p0=guess)
+
+    except RuntimeError:
+        print("Error - curve_fit failed")
+        opt = guess
+        cov = np.zeros([len(opt), len(opt)])
+
+    err = np.sqrt(cov.diagonal())
+    fit_time = np.linspace(x_data.min(), x_data.max(), 200)
+    fit_curve = function(fit_time, *opt)
+
+    return opt, err, fit_time, fit_curve
+
+
+def fit_multi_RB(x_data, y_data, model=0):
+
+    a_guess = y_data[0, -1]
+    b_guess = y_data[0, 0] - a_guess
     p_guess = 0.95
 
     if model == 0:

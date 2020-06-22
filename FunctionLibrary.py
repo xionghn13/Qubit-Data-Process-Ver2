@@ -18,6 +18,10 @@ def damped_sinusoid(t, a, b, f, t0, T):
     return a + b * np.cos(2 * np.pi * f * (t - t0)) * np.exp(- t / T)
 
 
+def drifted_damped_sinusoid(t, a, b, c, f, t0, T1, T2):
+    return a + b * np.cos(2 * np.pi * f * (t - t0)) * np.exp(- t / T1) + c * np.exp(- t / T2)
+    
+
 def randomized_benchmarking_0(m, p, a, b):
     return a + b * p ** m
 
