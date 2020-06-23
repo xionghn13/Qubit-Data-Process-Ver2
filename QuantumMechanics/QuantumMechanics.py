@@ -1,6 +1,11 @@
 #Generic Python packages
 import numpy as np
 import qutip
+from scipy import optimize
+import sys
+import matplotlib.pyplot as plt
+
+    
 
 #Generic Quantum operations
 
@@ -171,9 +176,12 @@ def find_most_likely_density_matrix(data, beta_coefficients, options={'maxiter':
         rho = construct_rho_from_T(param)
         data_theory = theoretical_measurement_results(rho, beta_coefficients, list_gates_tomo_two_qubits_36)
         err = np.sum(np.abs(data_theory - data) ** 2)
-        flush_print('error=%.3G....' % err)
-#         print(data_theory.shape)
-#         print(data.shape)
+        
+        string = 'error=%.3G....' % err
+        sys.stdout.write("\r")
+        sys.stdout.write(string)
+        sys.stdout.flush()
+
         return err
     p0 = np.zeros(16)
     p0[:4] = 1
