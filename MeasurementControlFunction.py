@@ -21,7 +21,7 @@ def Wait(sec, remind_interval=1):
 
 
 def RunMeasurement(ConfigName, MeasLabel, ItemDict={},
-                   DataFolderName='AugustusXVII', ConfigPath='', PrintOutFileName=False):
+                   DataFolderName='Z:\Projects\Fluxonium\Data\\AugustusXVII', ConfigPath='', PrintOutFileName=False):
     # set path to executable
     ScriptTools.setExePath('C:\Program Files\Labber\Program')
 
@@ -32,7 +32,7 @@ def RunMeasurement(ConfigName, MeasLabel, ItemDict={},
     Day = TimeStr[8:10]
     # define measurement objects
     # ConfigPath = 'C:\SC Lab\GitHubRepositories\measurement-with-labber\measurement setting/'
-    DataPath = 'Z:\Projects\Fluxonium\Data\\' + DataFolderName + '/' + Year + '/' + Month + '/' + 'Data_' + Month + Day + '/'
+    DataPath = DataFolderName + '/' + Year + '/' + Month + '/' + 'Data_' + Month + Day + '/'
 
     if not os.path.exists(DataPath):
         os.makedirs(DataPath)
@@ -49,6 +49,8 @@ def RunMeasurement(ConfigName, MeasLabel, ItemDict={},
                 MeasObj.updateValue(item, subitem[0], itemType=subitem[1])
         else:
             MeasObj.updateValue(item, value)
-
+    # if second_channel != '':
+    #     MeasObj.setMasterChannel(second_channel)
     MeasObj.performMeasurement(return_data=False)
+
     return [DataPath, MeasLabel + '_' + TimeStr + '.hdf5']

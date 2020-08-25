@@ -52,6 +52,15 @@ def full_blob_analysis(complex_array, bin=100, num_blob=4, method='same_width'):
     heights = get_center_heights(X, Y, H, centers)
     param_mat = np.concatenate((heights.reshape(num_blob, 1), centers, sigmas), axis=1)
     params, params_err = fg.fit_gaussian(X, Y, H, param_mat, method=method)
+    heights_fit, centers_fit, sigmas_fit = unwrap_blob_parameters(params)
+    trial = 0
+    while np.any(heights_fit < 0) and trial < 0:
+        centers, sigmas = get_blob_centers(sReal, sImag, num_blob)
+        heights = get_center_heights(X, Y, H, centers)
+        param_mat = np.concatenate((heights.reshape(num_blob, 1), centers, sigmas), axis=1)
+        params, params_err = fg.fit_gaussian(X, Y, H, param_mat, method=method)
+        heights_fit, centers_fit, sigmas_fit = unwrap_blob_parameters(params)
+        trial += 1
     return params, params_err
 
 
@@ -153,3 +162,15 @@ def p_to_fidelity_interleaved(p_arr, p_err_arr, dim, p, p_err, blob_ind):
     error_err = (dim - 1) * parameter_err / dim
 
     return [parameter, parameter_err, error, error_err]
+
+
+def cross_entropy(p, q):
+    return -np.sum(p * np.log(q))
+
+def XEB_sequence_fidelity(p_measured, p_expected):
+    # the length of p_measured should be 2 ** n
+    p_incoherent = np.zeros_like(p_measured)
+    p_incoherent = p_incoherent + 1. / len(p_incoherent)
+    F_XEB = (cross_entropy(p_incoherent, p_expected) - cross_entropy(
+        p_measured, p_expected)) / (cross_entropy(p_incoherent, p_expected) - cross_entropy(p_expected, p_expected))
+    return F_XEB

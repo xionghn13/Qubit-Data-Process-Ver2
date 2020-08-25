@@ -22,7 +22,10 @@ def apply_gate(density_matrix, *args):
     return d
 
 def gate_to_unitary(gate):
-    return (1j*gate/2).expm()
+    # there should be a minus sign here?
+    # return (1j*gate/2).expm()
+    return (-1j*gate/2).expm()
+
 
 def apply_single_unitary(density_matrix,unitary):
     return unitary * density_matrix * unitary.dag()
@@ -160,7 +163,7 @@ def calculate_chi_for_two_qubits_unitary(unitary):
     return lambda_coefficients.H.dot(lambda_coefficients)
 
 
-def find_most_likely_density_matrix(data, beta_coefficients, options={'maxiter': 100, 'gtol': 1e-03}):
+def find_most_likely_density_matrix(data, beta_coefficients, print_error=True, options={'maxiter': 100, 'gtol': 1e-03}):
     def construct_rho_from_T(param):
         [t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14 ,t15, t16] = param        
         T = np.matrix([
@@ -177,10 +180,11 @@ def find_most_likely_density_matrix(data, beta_coefficients, options={'maxiter':
         data_theory = theoretical_measurement_results(rho, beta_coefficients, list_gates_tomo_two_qubits_36)
         err = np.sum(np.abs(data_theory - data) ** 2)
         
-        string = 'error=%.3G....' % err
-        sys.stdout.write("\r")
-        sys.stdout.write(string)
-        sys.stdout.flush()
+        if print_error:
+            string = 'error=%.3G....' % err
+            sys.stdout.write("\r")
+            sys.stdout.write(string)
+            sys.stdout.flush()
 
         return err
     p0 = np.zeros(16)

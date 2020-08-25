@@ -270,19 +270,32 @@ def fit_multi_RB(x_data, y_data, model=0):
     a_guess = y_data[0, -1]
     b_guess = y_data[0, 0] - a_guess
     p_guess = 0.95
+    num_measurements = y_data.shape[0]
+    num_points = y_data.shape[1]
+    
+    guess = list(np.zeros(num_measurements) + p_guess)
 
     if model == 0:
-        guess = [p_guess, a_guess, b_guess]
+        guess += [a_guess, b_guess]
         # print(guess)
         function = randomized_benchmarking_0
     elif model == 1:
-        guess = [p_guess, a_guess, b_guess, 0.035 * b_guess]
+        guess += [a_guess, b_guess, 0.035 * b_guess]
         # print(guess)
         function = randomized_benchmarking_1
     else:
         raise ValueError('model = %s? No such fucking model!' % model)
+        
+    def func(m, *args):
+        arg_list = list(args)
+        output = np.array([])
+        for i in range(num_measurements):
+            argi = [arg_list[i]] + arg_list[num_measurements:]
+            output = np.concatenate([output, function(m, *argi)])
+        return output
+
     try:
-        opt, cov = curve_fit(function, x_data, y_data, p0=guess)
+        opt, cov = curve_fit(func, x_data, y_data.ravel(), p0=guess)
 
     except RuntimeError:
         print("Error - curve_fit failed")
@@ -291,7 +304,7 @@ def fit_multi_RB(x_data, y_data, model=0):
 
     err = np.sqrt(cov.diagonal())
     fit_time = np.linspace(x_data.min(), x_data.max(), 200)
-    fit_curve = function(fit_time, *opt)
+    fit_curve = np.reshape(func(fit_time, *opt), (num_measurements, 200))
 
     return opt, err, fit_time, fit_curve
     
