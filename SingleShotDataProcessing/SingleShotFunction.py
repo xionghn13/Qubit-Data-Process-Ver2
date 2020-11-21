@@ -53,13 +53,20 @@ def full_blob_analysis(complex_array, bin=100, num_blob=4, method='same_width'):
     param_mat = np.concatenate((heights.reshape(num_blob, 1), centers, sigmas), axis=1)
     params, params_err = fg.fit_gaussian(X, Y, H, param_mat, method=method)
     heights_fit, centers_fit, sigmas_fit = unwrap_blob_parameters(params)
+    if np.all(params_err == 0):
+        # fail to fit, fit again
+        heights_fit[0] = -1
     trial = 0
-    while np.any(heights_fit < 0) and trial < 0:
+    while np.any(heights_fit < 0) and trial < 100:
+        print('height<0 in full_blob_analysis, try again!')
         centers, sigmas = get_blob_centers(sReal, sImag, num_blob)
         heights = get_center_heights(X, Y, H, centers)
         param_mat = np.concatenate((heights.reshape(num_blob, 1), centers, sigmas), axis=1)
         params, params_err = fg.fit_gaussian(X, Y, H, param_mat, method=method)
         heights_fit, centers_fit, sigmas_fit = unwrap_blob_parameters(params)
+        if np.all(params_err == 0):
+            # fail to fit, fit again
+            heights_fit[0] = -1
         trial += 1
     return params, params_err
 

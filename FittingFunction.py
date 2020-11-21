@@ -111,7 +111,7 @@ def fit_gaussians_1D(x_data, y_data, num_gaussian=2, prominence_guess_factor=0.0
     return opt, err, fit_x_data, fit_y_data
 
 
-def fit_exponential(x_data, y_data):
+def fit_exponential(x_data, y_data, **kwargs):
     a_guess = y_data[-1]
     # y_data.mean() gives a very small number for centered data. That will cause an unexpected bug in curve_fit such
     # that the covariance matrix can't be calculated.
@@ -123,7 +123,7 @@ def fit_exponential(x_data, y_data):
     function = exponential
 
     try:
-        opt, cov = curve_fit(function, x_data, y_data, p0=guess)
+        opt, cov = curve_fit(function, x_data, y_data, p0=guess, **kwargs)
 
     except RuntimeError:
         print("Error - curve_fit failed")
@@ -137,11 +137,11 @@ def fit_exponential(x_data, y_data):
     return opt, err, fit_time, fit_curve
 
 
-def fit_ramsey(x_data, y_data):
+def fit_ramsey(x_data, y_data, **kwargs):
     a_guess = (y_data.mean() + y_data[-1]) / 2
     # y_data.mean() gives a very small number for centered data. That will cause an unexpected bug in curve_fit such
     # that the covariance matrix can't be calculated.
-    b_guess = (y_data.max() - y_data.min()) / 2
+    b_guess = (y_data.max() - y_data.min()) / 2 * np.sign(y_data[0] - a_guess)
     T_guess = x_data[-1]
     t0_guess = 0
     num_y = len(y_data)
@@ -152,6 +152,7 @@ def fit_ramsey(x_data, y_data):
     f_guess = np.abs(freq[ind_max])
 
     guess = [a_guess, b_guess, f_guess, t0_guess, T_guess]
+    # print(guess)
     bound = [
     [-abs(abs(y_data).max() * 10), -abs(b_guess * 10), f_guess * 0.1, -x_data[-1], T_guess * 0.1],
     [abs(abs(y_data).max() * 10), abs(b_guess * 10), f_guess * 10, x_data[-1], T_guess * 10]
@@ -160,7 +161,7 @@ def fit_ramsey(x_data, y_data):
     function = damped_sinusoid
 
     try:
-        opt, cov = curve_fit(function, x_data, y_data, p0=guess, bounds=bound)
+        opt, cov = curve_fit(function, x_data, y_data, p0=guess, bounds=bound, **kwargs)
 
     except RuntimeError:
         try:
@@ -190,7 +191,7 @@ def fit_ramsey(x_data, y_data):
 
     return opt, err, fit_time, fit_curve
 
-def fit_drifted_ramsey(x_data, y_data):
+def fit_drifted_ramsey(x_data, y_data, **kwargs):
     a_guess = (y_data.mean() + y_data[-1]) / 2
     b_guess = (y_data.max() - y_data.min()) / 2
     c_guess = a_guess
@@ -215,7 +216,7 @@ def fit_drifted_ramsey(x_data, y_data):
     function = drifted_damped_sinusoid
 
     try:
-        opt, cov = curve_fit(function, x_data, y_data, p0=guess, bounds=bound)
+        opt, cov = curve_fit(function, x_data, y_data, p0=guess, bounds=bound, **kwargs)
 
     except RuntimeError:
         print("Error - curve_fit failed")
@@ -229,12 +230,12 @@ def fit_drifted_ramsey(x_data, y_data):
     return opt, err, fit_time, fit_curve
     
     
-def fit_rabi(x_data, y_data):
-    opt, err, fit_time, fit_curve = fit_ramsey(x_data, y_data)
+def fit_rabi(x_data, y_data, **kwargs):
+    opt, err, fit_time, fit_curve = fit_ramsey(x_data, y_data, **kwargs)
     return opt, err, fit_time, fit_curve
 
 
-def fit_RB(x_data, y_data, model=0):
+def fit_RB(x_data, y_data, model=0, **kwargs):
 
     a_guess = y_data[-1]
     b_guess = y_data[0] - a_guess
@@ -251,7 +252,7 @@ def fit_RB(x_data, y_data, model=0):
     else:
         raise ValueError('model = %s? No such fucking model!' % model)
     try:
-        opt, cov = curve_fit(function, x_data, y_data, p0=guess)
+        opt, cov = curve_fit(function, x_data, y_data, p0=guess, **kwargs)
 
     except RuntimeError:
         print("Error - curve_fit failed")
@@ -265,7 +266,7 @@ def fit_RB(x_data, y_data, model=0):
     return opt, err, fit_time, fit_curve
 
 
-def fit_multi_RB(x_data, y_data, model=0):
+def fit_multi_RB(x_data, y_data, model=0, **kwargs):
 
     a_guess = y_data[0, -1]
     b_guess = y_data[0, 0] - a_guess
@@ -295,7 +296,7 @@ def fit_multi_RB(x_data, y_data, model=0):
         return output
 
     try:
-        opt, cov = curve_fit(func, x_data, y_data.ravel(), p0=guess)
+        opt, cov = curve_fit(func, x_data, y_data.ravel(), p0=guess, **kwargs)
 
     except RuntimeError:
         print("Error - curve_fit failed")
@@ -311,7 +312,7 @@ def fit_multi_RB(x_data, y_data, model=0):
 
 def fit_dephasing_and_frequency_shift_with_cavity_photons(x_data, dephasing_data, frequency_shift_data,
                                                           method='fix_Gamma_2_kappa_omega_c_omega_0', Gamma_2=0,
-                                                          kappa=0, omega_0=0, omega_c=0):
+                                                          kappa=0, omega_0=0, omega_c=0, **kwargs):
     y_data = np.concatenate((dephasing_data, frequency_shift_data))
 
     if method == 'fix_Gamma_2_kappa_omega_c_omega_0':
@@ -401,7 +402,7 @@ def fit_dephasing_and_frequency_shift_with_cavity_photons(x_data, dephasing_data
         raise ValueError('method = %s? No such fucking method!' % method)
 
     try:
-        opt, cov = curve_fit(function, x_data, y_data, p0=guess)
+        opt, cov = curve_fit(function, x_data, y_data, p0=guess, **kwargs)
 
     except RuntimeError:
         print("Error - curve_fit failed")
@@ -417,14 +418,14 @@ def fit_dephasing_and_frequency_shift_with_cavity_photons(x_data, dephasing_data
     return opt, err, fit_x, Gamma_fit, omega_fit
 
 
-def fitReflectionCircles(OneFreqUniqTrunc, OnePowerUniqTrunc, RComplexTrunc, guess, bounds):
+def fitReflectionCircles(OneFreqUniqTrunc, OnePowerUniqTrunc, RComplexTrunc, guess, bounds, **kwargs):
     RForFit = RComplexTrunc.ravel()
     RForFit = np.concatenate((np.real(RForFit), np.imag(RForFit)))
 
     Power = 1e-3 * 10 ** (OnePowerUniqTrunc / 10)
     NumPowerTrunc = len(Power)
     opt, cov = curve_fit(reflection_for_fit, [OneFreqUniqTrunc, Power], RForFit, p0=guess, bounds=bounds,
-                         max_nfev=300000, ftol=1e-15)
+                         max_nfev=300000, ftol=1e-15, **kwargs)
     f0_fit, gamma_f_fit, P0_fit, A_fit, amp_cor_re_fit, amp_cor_im_fit, P0_im_fit = opt
     LargerFreqRange = np.linspace(f0_fit - gamma_f_fit * 10, f0_fit + gamma_f_fit * 10, 500)
     LargerFreqRange = np.concatenate(([0], LargerFreqRange, [0]))
@@ -436,7 +437,7 @@ def fitReflectionCircles(OneFreqUniqTrunc, OnePowerUniqTrunc, RComplexTrunc, gue
     return opt, cov, LargerFreqRange, FittedComplex
 
 
-def reflection_for_fit(fPower, f0, gamma_f, P0, A, amp_cor_re, amp_cor_im, P0_im):
+def reflection_for_fit(fPower, f0, gamma_f, P0, A, amp_cor_re, amp_cor_im, P0_im, **kwargs):
     f = fPower[0]
     num_f = len(f)
     Power = fPower[1]
