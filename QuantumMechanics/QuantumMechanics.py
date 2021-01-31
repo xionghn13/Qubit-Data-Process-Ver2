@@ -237,7 +237,7 @@ def calculate_chi_from_density_matrices(list_density_matrices, initial_gates=def
     return chi_vector.reshape((shape_beta[0], shape_beta[1]))
 
 
-def show_density_matrix_2D(matrix):
+def show_density_matrix_2D(matrix, title=None):
     list_ticks_1QB = ['1', '0']
     list_ticks_2QB = []
     for t1 in list_ticks_1QB:
@@ -253,7 +253,8 @@ def show_density_matrix_2D(matrix):
     plt.xticks(fontsize=20)
     plt.yticks(fontsize=20)
     plt.ylim((position_array.max() + 0.5, position_array.min() - 0.5))
-
+    if title != None:
+        plt.title(title)
     ax = plt.subplot(122)
     plt.imshow(matrix.imag, cmap=plt.cm.bwr, vmin=-1, vmax=1)
     ax.xaxis.tick_top()
