@@ -265,6 +265,31 @@ def fit_RB(x_data, y_data, model=0, **kwargs):
 
     return opt, err, fit_time, fit_curve
 
+def fit_XEB(x_data, y_data, **kwargs):
+
+    b_guess = y_data[0]
+    p_guess = 0.95
+
+    def XEB_function(m, p, b):
+        return randomized_benchmarking_0(m, p, 0, b)
+
+    guess = [p_guess, b_guess]
+    # print(guess)
+    function = XEB_function
+
+    try:
+        opt, cov = curve_fit(function, x_data, y_data, p0=guess, **kwargs)
+
+    except RuntimeError:
+        print("Error - curve_fit failed")
+        opt = guess
+        cov = np.zeros([len(opt), len(opt)])
+
+    err = np.sqrt(cov.diagonal())
+    fit_time = np.linspace(x_data.min(), x_data.max(), 200)
+    fit_curve = function(fit_time, *opt)
+
+    return opt, err, fit_time, fit_curve
 
 def fit_multi_RB(x_data, y_data, model=0, **kwargs):
 
