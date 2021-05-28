@@ -142,7 +142,7 @@ def fit_ramsey(x_data, y_data, **kwargs):
     # y_data.mean() gives a very small number for centered data. That will cause an unexpected bug in curve_fit such
     # that the covariance matrix can't be calculated.
     b_guess = (y_data.max() - y_data.min()) / 2 * np.sign(y_data[0] - a_guess)
-    T_guess = x_data[-1]
+    T_guess = max(np.abs(x_data[-1]), np.abs(x_data[0]))
     t0_guess = 0
     num_y = len(y_data)
     fourier = np.fft.fft(y_data - y_data.mean())
@@ -154,8 +154,8 @@ def fit_ramsey(x_data, y_data, **kwargs):
     guess = [a_guess, b_guess, f_guess, t0_guess, T_guess]
     # print(guess)
     bound = [
-    [-abs(abs(y_data).max() * 10), -abs(b_guess * 10), f_guess * 0.1, -x_data[-1], T_guess * 0.1],
-    [abs(abs(y_data).max() * 10), abs(b_guess * 10), f_guess * 10, x_data[-1], T_guess * 10]
+    [-abs(abs(y_data).max() * 10), -abs(b_guess * 10), f_guess * 0.1, -T_guess, T_guess * 0.1],
+    [abs(abs(y_data).max() * 10), abs(b_guess * 10), f_guess * 10, T_guess, T_guess * 10]
     ]
     # print(guess)
     function = damped_sinusoid
@@ -165,11 +165,11 @@ def fit_ramsey(x_data, y_data, **kwargs):
 
     except RuntimeError:
         try:
-            T_guess = x_data[-1] / 5
+            T_guess = T_guess / 5
             guess = [a_guess, b_guess, f_guess, t0_guess, T_guess]
             bound = [
-            [-abs(abs(y_data).max() * 10), -abs(b_guess * 10), f_guess * 0.1, -x_data[-1], T_guess * 0.1],
-            [abs(abs(y_data).max() * 10), abs(b_guess * 10), f_guess * 10, x_data[-1], T_guess * 10]
+            [-abs(abs(y_data).max() * 10), -abs(b_guess * 10), f_guess * 0.1, -T_guess, T_guess * 0.1],
+            [abs(abs(y_data).max() * 10), abs(b_guess * 10), f_guess * 10, T_guess, T_guess * 10]
             ]
             opt, cov = curve_fit(function, x_data, y_data, p0=guess, bounds=bound)
         except RuntimeError:   
