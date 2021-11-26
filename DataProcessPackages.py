@@ -24,6 +24,7 @@ from QuantumMechanics.QuantumMechanics import *
 import QuantumMechanics.qubit_simulation.coupled as coupled
 import QuantumMechanics.qubit_simulation.fluxonium as fluxonium
 import QuantumMechanics.qubit_simulation.evolgates as evolgates
+import QuantumMechanics.qubit_simulation.cqed as cqed
 
 #interactive packages
 from ipywidgets import interact, interactive, fixed, interact_manual
