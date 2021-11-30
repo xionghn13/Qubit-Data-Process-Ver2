@@ -61,7 +61,7 @@ class Cavity(object):
 
     def _adag(self):
         """creation operator in the LC basis."""
-        return qt.creat(self.nlev)
+        return qt.create(self.nlev)
 
     def _hamiltonian_lc(self):
         """Cavity Hamiltonian."""
@@ -170,6 +170,56 @@ class Cavity(object):
         if nlev < 1:
             raise Exception('`nlev` is out of bounds.')
         return qt.qeye(nlev)
+
+    def a(self, nlev=None):
+        """Annihilation operator in the qubit eigenbasis.
+
+        Parameters
+        ----------
+            The number of qubit eigenstates if different from `self.nlev`.
+
+        Returns
+        -------
+        :class:`qutip.Qobj`
+            The annihilation operator.
+        """
+        if nlev is None:
+            nlev = self.nlev
+        if nlev < 1 or nlev > self.nlev:
+            raise Exception('`nlev` is out of bounds.')
+        _, evecs = self._eigenspectrum_lc(eigvecs_flag=True)
+        a_op = np.zeros((nlev, nlev), dtype=complex)
+        for ind1 in range(nlev):
+            for ind2 in range(nlev):
+                a_op[ind1, ind2] = self._a().matrix_element(
+                    evecs[ind1].dag(), evecs[ind2])
+        return qt.Qobj(a_op)
+
+
+    def adag(self, nlev=None):
+        """Creation operator in the qubit eigenbasis.
+
+        Parameters
+        ----------
+            The number of qubit eigenstates if different from `self.nlev`.
+
+        Returns
+        -------
+        :class:`qutip.Qobj`
+            The creation operator.
+        """
+        if nlev is None:
+            nlev = self.nlev
+        if nlev < 1 or nlev > self.nlev:
+            raise Exception('`nlev` is out of bounds.')
+        _, evecs = self._eigenspectrum_lc(eigvecs_flag=True)
+        adag_op = np.zeros((nlev, nlev), dtype=complex)
+        for ind1 in range(nlev):
+            for ind2 in range(nlev):
+                adag_op[ind1, ind2] = self._adag().matrix_element(
+                    evecs[ind1].dag(), evecs[ind2])
+        return qt.Qobj(adag_op)
+
 
     def a_ij(self, level1, level2):
         """The annihilation matrix element between two eigenstates.
