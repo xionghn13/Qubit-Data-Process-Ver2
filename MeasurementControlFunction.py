@@ -20,10 +20,10 @@ def Wait(sec, remind_interval=1):
     sys.stdout.flush()
 
 
-def RunMeasurement(ConfigName, MeasLabel, ItemDict={},
+def RunMeasurement(ConfigName, MeasLabel, ItemDict={}, ExePath='C:\Program Files\Labber\Program',
                    DataFolderName='Z:\Projects\Fluxonium\Data\\AugustusXVII', ConfigPath='', PrintOutFileName=False):
     # set path to executable
-    ScriptTools.setExePath('C:\Program Files\Labber\Program')
+    ScriptTools.setExePath(ExePath)
 
     TimeNow = datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
     TimeStr = str(TimeNow)
@@ -51,6 +51,7 @@ def RunMeasurement(ConfigName, MeasLabel, ItemDict={},
             MeasObj.updateValue(item, value)
     # if second_channel != '':
     #     MeasObj.setMasterChannel(second_channel)
-    MeasObj.performMeasurement(return_data=False)
+
+    MeasObj.performMeasurement(return_data=False, use_scheduler=False)
 
     return [DataPath, MeasLabel + '_' + TimeStr + '.hdf5']
